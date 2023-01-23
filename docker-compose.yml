@@ -18,6 +18,7 @@ services:
       - LDAP_SEARCH_BASE=DC=CONTOSO,DC=COM
       - LDAP_BIND_DN=CN=Postfix_Service,OU=Service,OU=Users,OU=HK,DC=CONTOSO,DC=COM
       - LDAP_PASSWORD=7ubT%\&VAf6BK85    # Password has ampersand need to use "\" to escape
+      - HEADER_CHECKS=1                  # 1=Enable, 0=Disable      
     volumes:
 #      - postfix:/etc/postfix
       - log:/var/log
