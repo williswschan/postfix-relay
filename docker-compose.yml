@@ -1,0 +1,26 @@
+version: "3"
+volumes:
+#  postfix:
+  log:
+services:
+  postfix:
+    image: postfix:latest
+    container_name: postfix
+    environment:
+      - TZ=Asia/Hong_Kong
+      - MYHOSTNAME=smtp.contoso.com
+      - MYNETWORKS=
+      - RELAYHOST=
+      - "ALIASES=alwaysbcc:  journal@contoso.com"
+      - ALWAYS_BCC=alwaysbcc
+      - TRANSPORT=contoso.com  smtp:[mail.contoso.com]:25
+      - LDAP_SERVERS=dc01.contoso.com
+      - LDAP_SEARCH_BASE=DC=CONTOSO,DC=COM
+      - LDAP_BIND_DN=CN=Postfix_Service,OU=Service,OU=Users,OU=HK,DC=CONTOSO,DC=COM
+      - LDAP_PASSWORD=7ubT%\&VAf6BK85    # Password has ampersand need to use "\" to escape
+    volumes:
+#      - postfix:/etc/postfix
+      - log:/var/log
+    ports:
+      - 25:25
+    restart: unless-stopped
