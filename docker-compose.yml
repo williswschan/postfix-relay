@@ -4,7 +4,7 @@ volumes:
   log:
 services:
   postfix:
-    image: postfix:latest
+    image: williswschan/postfix:latest
     container_name: postfix
     environment:
       - TZ=Asia/Hong_Kong
