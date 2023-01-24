@@ -14,18 +14,12 @@ RUN sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|
 RUN dnf -y install postfix postfix-ldap tzdata cyrus-sasl cyrus-sasl-plain openldap && \
 	dnf clean all
 
-#ENV TZ=
-#ENV MYHOSTNAME=
-#ENV MYNETWORKS=
-#ENV RELAYHOST=
-#ENV ALWAYS_BCC=
-#ENV TRANSPORT=
-
 COPY main.cf /etc/postfix
-COPY Dockerfile /etc/postfix
+#COPY Dockerfile /etc/postfix		# For further reference
 COPY saslauthd /etc/sysconfig
-COPY smtpd.conf /etc/sasl2
+#COPY smtpd.conf /etc/sasl2
 COPY start_server.sh /opt
+COPY header_checks /etc/postfix/
 
 RUN chmod 755 /opt/start_server.sh
 
@@ -37,4 +31,4 @@ EXPOSE 25/tcp
 #VOLUME ["/etc/postfix"]
 #VOLUME ["/var/log"]
 
-CMD /bin/bash /opt/start_server.sh
+CMD /opt/start_server.sh
