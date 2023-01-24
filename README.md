@@ -2,6 +2,6 @@ How to Build and Run Your Own Container Images
 
 git clone https://github.com/williswschan/postfix-relay.git
 
-cd postfix
+cd postfix-relay
 
-docker build -t postfix .
+docker build -t postfix-relay .
