@@ -3,9 +3,9 @@ volumes:
 #  postfix:
   log:
 services:
-  postfix:
-    image: williswschan/postfix:latest
-    container_name: postfix
+  postfix-relay:
+    image: williswschan/postfix-relay:latest
+    container_name: postfix-relay
     environment:
       - TZ=Asia/Hong_Kong
       - MYHOSTNAME=smtp-out.contoso.com
