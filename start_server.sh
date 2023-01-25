@@ -92,9 +92,7 @@ EOF
 sed -i "s/#LDAP_SERVERS/${LDAP_SERVERS}/g" /etc/sasl2/smtpd.conf
 sed -i "s/#LDAP_SEARCH_BASE/${LDAP_SEARCH_BASE}/g" /etc/sasl2/smtpd.conf
 sed -i "s/#LDAP_BIND_DN/${LDAP_BIND_DN}/g" /etc/sasl2/smtpd.conf
-sed -i "s/#LDAP_PASSWORD/$(echo -e ${LDAP_PASSWORD} | sed "s|\&|\\\&|g")/g" /etc/sasl2/smtpd.conf		# Need to escape the ampersand or sed not work!
-
-saslauthd -m /run/saslauthd -a ldap -O /etc/sasl2/smtpd.conf
+sed -i "s/#LDAP_PASSWORD/$(echo -e ${LDAP_PASSWORD} | sed "s|\&|\\\&|g")/g" /etc/sasl2/smtpd.conf		# Need to escape any ampersand(&) or sed won't work.
 
 echo ${TRANSPORT} > /etc/postfix/transport
 echo ${ALIASES} > /etc/postfix/aliases
@@ -104,8 +102,8 @@ postalias hash:/etc/postfix/header_checks
 postalias hash:/etc/postfix/transport
 #postalias hash:/etc/postfix/virtual
 
-if [ "$HEADER_CHECKS" = "1" ]; then postconf header_checks=regexp:/etc/postfix/header_checks; fi
-if [ "$HEADER_CHECKS" = "0" ]; then postconf header_checks=; fi
+if [ "$HEADER_CHECKS" = "1" ]; then postconf header_checks=regexp:/etc/postfix/header_checks; else postconf header_checks=; fi
+if [ "$RATE_LIMIT" = "" ]; then postconf smtpd_client_message_rate_limit=0; else postconf smtpd_client_message_rate_limit=${RATE_LIMIT}; fi
 postconf myhostname=${MYHOSTNAME}
 postconf mynetworks=${MYNETWORKS}
 postconf relayhost=${RELAYHOST}
@@ -116,7 +114,8 @@ postconf maillog_file=/var/log/postfix.log
 touch /var/log/postfix.log
 #ln -sf /proc/1/fd/1 /var/log/postfix.log
 
+saslauthd -m /run/saslauthd -a ldap -O /etc/sasl2/smtpd.conf
+/usr/sbin/crond -m off
 #/usr/sbin/postfix start-fg &
 /usr/sbin/postfix start
-/usr/sbin/crond -m off
-tail -F /var/log/postfix.log >> /dev/stdout
+tail -F /var/log/postfix.log >> /dev/stdout		# Non-terminated process need to be placed at the last.
