@@ -4,22 +4,25 @@ volumes:
   log:
 services:
   postfix-relay:
-    image: williswschan/postfix-relay:latest
+    image: postfix-relay:latest
     container_name: postfix-relay
     environment:
       - TZ=Asia/Hong_Kong
       - MYHOSTNAME=smtp-out.contoso.com
-      - MYNETWORKS=
-      - RELAYHOST=
-      - "ALIASES=alwaysbcc:  journal@contoso.com"
-      - ALWAYS_BCC=alwaysbcc
+#      - MYNETWORKS=
+      - RELAYHOST=smtpo.hkbn.net
+#      - "ALIASES=alwaysbcc:  journal@contoso.com, elon.musk@contoso.com"
+#      - ALWAYS_BCC=alwaysbcc
       - TRANSPORT=contoso.com  smtp:[mail.contoso.com]:25
       - LDAP_SERVERS=dc01.contoso.com
       - LDAP_SEARCH_BASE=DC=CONTOSO,DC=COM
-      - LDAP_BIND_DN=CN=Postfix_Service,OU=Service,OU=Users,OU=HK,DC=CONTOSO,DC=COM
-      - LDAP_PASSWORD=7ubT%&VAf6BK85
-      - HEADER_CHECKS=1                  # 1=Enable, 0=Disable      
+      - LDAP_BIND_DN=CN=Postfix_Service,OU=Service,OU=Users,DC=CONTOSO,DC=COM
+      - LDAP_PASSWORD=6ucT%&VAf7Ck62
+      - HEADER_CHECKS=0                  # 1=Enable, others or default is disabled.
+      - RATE_LIMIT=2                     # Unset or 0=Unlimited.
     volumes:
+#      - /etc/timezone:/etc/timezone:ro
+#      - /etc/localtime:/etc/localtime:ro    
 #      - postfix:/etc/postfix
       - log:/var/log
     ports:
