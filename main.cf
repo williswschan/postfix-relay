@@ -1,22 +1,16 @@
-#alias_database = lmdb:/etc/postfix/aliases
-#alias_maps = lmdb:/etc/postfix/aliases
 alias_database = hash:/etc/postfix/aliases
 alias_maps = hash:/etc/postfix/aliases
 broken_sasl_auth_clients = yes
-#compatibility_level = 3.6	# Alpine config
 #compatibility_level = 2	# Centos config
 command_directory = /usr/sbin
 daemon_directory = /usr/libexec/postfix
 data_directory = /var/lib/postfix
 debug_peer_level = 2
 debugger_command = PATH=/bin:/usr/bin:/usr/local/bin:/usr/X11R6/bin ddd $daemon_directory/$process_name $process_id & sleep 5
-header_checks = regexp:/etc/postfix/header_checks
 html_directory = no
 inet_interfaces = all
 inet_protocols = all
 mail_owner = postfix
-#maillog_file = /dev/stdout
-maillog_file = /var/log/postfix.log
 mailq_path = /usr/bin/mailq.postfix
 manpage_directory = /usr/share/man
 myhostname = host.domain.tld
@@ -36,8 +30,8 @@ smtpd_sasl_authenticated_header = no
 smtpd_sasl_security_options = noanonymous
 smtpd_sasl_type = cyrus
 smtpd_sender_restrictions = permit_mynetworks, permit_sasl_authenticated, reject
+smtpd_tls_cert_file = /etc/pki/tls/certs/postfix.pem
+smtpd_tls_key_file = /etc/pki/tls/private/postfix.key
 smtpd_tls_security_level = may
-#transport_maps = lmdb:/etc/postfix/transport
 transport_maps = hash:/etc/postfix/transport
 unknown_local_recipient_reject_code = 550
-
