@@ -1,4 +1,4 @@
-How to Build and Run Your Own Container Images
+Here is how to build and run your own container images;
 
 git clone https://github.com/williswschan/postfix-relay.git
 
