@@ -26,8 +26,6 @@ services:
        - SHADOW_USERNAME=smtp-out                                                                                        # Use when PWCHECK_METHOD=SHADOW
        - SHADOW_PASSWORD=Dax852EB!                                                                                       # Use when PWCHECK_METHOD=SHADOW
     volumes:
-#      - /etc/timezone:/etc/timezone:ro
-#      - /etc/localtime:/etc/localtime:ro    
 #      - postfix:/etc/postfix
       - log:/var/log
     ports:
