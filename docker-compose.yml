@@ -11,7 +11,7 @@ services:
 #      - MYHOSTNAME=smtp-out.contoso.com
 #      - MYNETWORKS=127.0.0.1, 192.168.1.44
 #      - RELAYHOST=smtpo.hsbc.com.hk
-#      - "ALIASES=alwaysbcc: journal@contoso.com, peter.pen@contoso.com/elon.musk: elon.musk@tasla.com"  # Where "/" as line seperator.
+#      - "ALIASES=alwaysbcc: journal@contoso.com, peter.pen@contoso.com / elon.musk: elon.musk@tasla.com"  # Where "/" as line seperator.
 #      - ALWAYS_BCC=alwaysbcc
 #      - TRANSPORT=contoso.com smtp:[mail.contoso.com]:25, tasla.com smtp:[mail.tasla.com]:25
       - LDAP_SERVERS=pdc01.contoso.com                                                                   # smtpd_sasl_auth_enable will set as no without this ENV.
