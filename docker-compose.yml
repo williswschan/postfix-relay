@@ -14,13 +14,13 @@ services:
 #      - "ALIASES=alwaysbcc: journal@contoso.com, peter.pen@contoso.com / elon.musk: elon.musk@tasla.com"  # Where "/" as line seperator.
 #      - ALWAYS_BCC=alwaysbcc
 #      - TRANSPORT=contoso.com smtp:[mail.contoso.com]:25, tasla.com smtp:[mail.tasla.com]:25
-      - LDAP_SERVERS=pdc01.contoso.com                                                                   # smtpd_sasl_auth_enable will set as no without this ENV.
-      - LDAP_SEARCH_BASE=DC=CONTOSO,DC=COM                                                               # smtpd_sasl_auth_enable will set as no without this ENV.
-      - LDAP_BIND_DN=CN=Postfix_Service,OU=Service,OU=Users,OU=HK,DC=CONTOSO,DC=COM                      # smtpd_sasl_auth_enable will set as no without this ENV.
-      - LDAP_PASSWORD=6uAt%&vBf7CK85                                                                     # smtpd_sasl_auth_enable will set as no without this ENV.
-#      - HEADER_CHECKS=1                                                                                 # Unset or 0=Disable.
-#      - RATE_LIMIT=2                                                                                    # Unset or 0=Unlimited.
-#      - DEFAULT_SMTP_PORT=2525                                                                          # Unset will be port 25.
+      - LDAP_SERVERS=pdc01.contoso.com                                                                     # smtpd_sasl_auth_enable will set as no without this ENV.
+      - LDAP_SEARCH_BASE=DC=CONTOSO,DC=COM                                                                 # smtpd_sasl_auth_enable will set as no without this ENV.
+      - LDAP_BIND_DN=CN=Postfix_Service,OU=Service,OU=Users,OU=HK,DC=CONTOSO,DC=COM                        # smtpd_sasl_auth_enable will set as no without this ENV.
+      - LDAP_PASSWORD=6uAt%&vBf7CK85                                                                       # smtpd_sasl_auth_enable will set as no without this ENV.
+#      - HEADER_CHECKS=1                                                                                   # Unset or 0=Disable.
+#      - RATE_LIMIT=2                                                                                      # Unset or 0=Unlimited.
+#      - DEFAULT_SMTP_PORT=2525                                                                            # Unset will be port 25.
 #      - DNS=192.168.1.1, 8.8.8.8
     volumes:
 #      - /etc/timezone:/etc/timezone:ro
