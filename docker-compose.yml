@@ -13,10 +13,10 @@ services:
       - RELAYHOST=smtpo.hsbc.com.hk
 #      - "ALIASES=alwaysbcc: journal@contoso.com, peter.pen@contoso.com/elon.musk: elon.musk@tasla.com"                  # Where "/" as line seperator
 #      - ALWAYS_BCC=alwaysbcc
-      - TRANSPORT=tasla.com smtp:[mail.tasla.com]:25
+      - TRANSPORT=tasla.com smtp:[mail.tasla.com]:25, db.com smtp:[mail.db.com]:25                                       
 #      - HEADER_CHECKS=1                                                                                                 # Unset or 0=Disable
-#      - RATE_LIMIT=2                                                                                                    # Unset or 0=Unlimited
-      - DEFAULT_SMTP_PORT=2525                                                                                           # Unset will be port 25
+#      - RATE_LIMIT=20                                                                                                   # Unset or 0=Unlimited
+#      - DEFAULT_SMTP_PORT=2525                                                                                          # Unset will be port 25
 #      - DNS=192.168.1.1, 8.8.8.8
       - PWCHECK_METHOD=SHADOW                                                                                            # Either set "LDAP" or "SHADOW"
 #      - LDAP_SERVERS=dc01.contoso.com                                                                                   # Use when PWCHECK_METHOD=LDAP
