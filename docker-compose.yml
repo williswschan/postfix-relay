@@ -7,26 +7,29 @@ services:
     image: postfix-relay:latest
     container_name: postfix-relay
     environment:
-#      - TZ=Asia/Hong_Kong
-#      - MYHOSTNAME=smtp-out.contoso.com
+      - TZ=Asia/Hong_Kong
+      - MYHOSTNAME=smtp-out.contoso.com
 #      - MYNETWORKS=127.0.0.1, 192.168.1.44
-#      - RELAYHOST=smtpo.hsbc.com.hk
-#      - "ALIASES=alwaysbcc: journal@contoso.com, peter.pen@contoso.com / elon.musk: elon.musk@tasla.com"  # Where "/" as line seperator.
+      - RELAYHOST=smtpo.hsbc.com.hk
+#      - "ALIASES=alwaysbcc: journal@contoso.com, peter.pen@contoso.com/elon.musk: elon.musk@tasla.com"                  # Where "/" as line seperator
 #      - ALWAYS_BCC=alwaysbcc
-#      - TRANSPORT=contoso.com smtp:[mail.contoso.com]:25, tasla.com smtp:[mail.tasla.com]:25
-      - LDAP_SERVERS=pdc01.contoso.com                                                                     # smtpd_sasl_auth_enable will set as no without this ENV.
-      - LDAP_SEARCH_BASE=DC=CONTOSO,DC=COM                                                                 # smtpd_sasl_auth_enable will set as no without this ENV.
-      - LDAP_BIND_DN=CN=Postfix_Service,OU=Service,OU=Users,OU=HK,DC=CONTOSO,DC=COM                        # smtpd_sasl_auth_enable will set as no without this ENV.
-      - LDAP_PASSWORD=6uAt%&vBf7CK85                                                                       # smtpd_sasl_auth_enable will set as no without this ENV.
-#      - HEADER_CHECKS=1                                                                                   # Unset or 0=Disable.
-#      - RATE_LIMIT=2                                                                                      # Unset or 0=Unlimited.
-#      - DEFAULT_SMTP_PORT=2525                                                                            # Unset will be port 25.
+      - TRANSPORT=tasla.com smtp:[mail.tasla.com]:25
+#      - HEADER_CHECKS=1                                                                                                 # Unset or 0=Disable
+#      - RATE_LIMIT=2                                                                                                    # Unset or 0=Unlimited
+      - DEFAULT_SMTP_PORT=2525                                                                                           # Unset will be port 25
 #      - DNS=192.168.1.1, 8.8.8.8
+      - PWCHECK_METHOD=SHADOW                                                                                            # Either set "LDAP" or "SHADOW"
+#      - LDAP_SERVERS=dc01.contoso.com                                                                                   # Use when PWCHECK_METHOD=LDAP
+#      - LDAP_SEARCH_BASE=DC=CONTOSO,DC=COM                                                                              # Use when PWCHECK_METHOD=LDAP
+#      - LDAP_BIND_DN=CN=Postfix_Service,OU=Service,OU=Users,OU=HK,DC=CONTOSO,DC=COM                                     # Use when PWCHECK_METHOD=LDAP
+#      - LDAP_PASSWORD=6ubC%&VAf5CK94                                                                                    # Use when PWCHECK_METHOD=LDAP
+       - SHADOW_USERNAME=smtp-out                                                                                        # Use when PWCHECK_METHOD=SHADOW
+       - SHADOW_PASSWORD=Dax852EB!                                                                                       # Use when PWCHECK_METHOD=SHADOW
     volumes:
 #      - /etc/timezone:/etc/timezone:ro
 #      - /etc/localtime:/etc/localtime:ro    
 #      - postfix:/etc/postfix
       - log:/var/log
     ports:
-      - 25:25
+      - 2525:2525
     restart: unless-stopped
