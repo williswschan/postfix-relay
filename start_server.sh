@@ -3,6 +3,8 @@
 #set -e
 #set -o pipefail
 
+shopt -s nocasematch
+if [[ "$PWCHECK_METHOD" == "LDAP" ]]; then
 cat > /etc/sasl2/smtpd.conf <<EOF
 pwcheck_method: saslauthd
 mech_list: plain login
@@ -20,6 +22,15 @@ ldap_start_tls: no
 ldap_version: 3
 ldap_auth_method: bind
 EOF
+elif [[ "$PWCHECK_METHOD" == "SHADOW" ]]; then
+cat > /etc/sasl2/smtpd.conf <<EOF
+pwcheck_method: saslauthd
+mech_list: PLAIN LOGIN
+EOF
+else
+	exit 1
+fi
+shopt -u nocasematch
 
 cat > /etc/postfix/header_checks <<EOF
 /^Received:.*/	     	IGNORE
@@ -27,6 +38,8 @@ cat > /etc/postfix/header_checks <<EOF
 EOF
 
 cat > /etc/postfix/main.cf <<EOF
+alias_database = hash:/etc/postfix/aliases
+alias_maps = hash:/etc/postfix/aliases	
 broken_sasl_auth_clients = yes
 compatibility_level = 2
 command_directory = /usr/sbin
@@ -37,6 +50,7 @@ debugger_command = PATH=/bin:/usr/bin:/usr/local/bin:/usr/X11R6/bin ddd $daemon_
 html_directory = no
 inet_interfaces = all
 inet_protocols = ipv4
+#inet_protocols = all
 mail_owner = postfix
 mailq_path = /usr/bin/mailq.postfix
 manpage_directory = /usr/share/man
@@ -96,16 +110,17 @@ if [ "${ALIASES}" ]
 then
 	cat /dev/null > /etc/postfix/aliases
 	IFS='/' ;for i in `echo "${ALIASES}"`; do echo $i | xargs >> /etc/postfix/aliases; done
-	postalias hash:/etc/postfix/aliases
-	postconf alias_database=hash:/etc/postfix/aliases
-	postconf alias_maps=hash:/etc/postfix/aliases	
 fi
+touch /etc/postfix/aliases
+postalias hash:/etc/postfix/aliases
 if [ "${TRANSPORT}" ]
 then
 	cat /dev/null > /etc/postfix/transport
 	IFS=',' ;for i in `echo "${TRANSPORT}"`; do echo $i | xargs >> /etc/postfix/transport; done
 	postmap hash:/etc/postfix/transport
 fi
+touch /etc/postfix/transport
+postalias hash:/etc/postfix/transport
 if [ "${HEADER_CHECKS}" ]
 then
 	postconf header_checks=regexp:/etc/postfix/header_checks
@@ -129,8 +144,16 @@ then
 else
 	postconf smtpd_sasl_auth_enable=no
 fi
+if [ "${SHADOW_USERNAME}" ] && [ "${SHADOW_PASSWORD}" ]
+then
+	useradd "${SHADOW_USERNAME}"; echo -e "${SHADOW_PASSWORD}" | passwd "${SHADOW_USERNAME}" --stdin
+	saslauthd -m /run/saslauthd -a shadow -O /etc/sasl2/smtpd.conf
+	postconf smtpd_sasl_auth_enable=yes
+else
+	postconf smtpd_sasl_auth_enable=no
+fi
 yes | cp /etc/postfix/master.cf.bak /etc/postfix/master.cf
-if [ "${DEFAULT_SMTP_PORT}" ]; then grep "^smtp.*smtpd$" /etc/postfix/master.cf | sed -i "s/^smtp/${DEFAULT_SMTP_PORT}/g" /etc/postfix/master.cf; fi
+if [ "${DEFAULT_SMTP_PORT}" ]; then grep "^smtp.*smtpd$" /etc/postfix/master.cf | sed "s/^smtp/${DEFAULT_SMTP_PORT}/g" >> /etc/postfix/master.cf; fi
 if [ "$MYHOSTNAME" ]; then postconf myhostname="${MYHOSTNAME}"; fi
 postconf mynetworks="${MYNETWORKS}"
 postconf relayhost="${RELAYHOST}"
