@@ -2,7 +2,7 @@
 FROM centos:latest
 
 MAINTAINER Willis Chan <willis.chan@mymsngroup.com>
-# Thu Jan 26 20:41:36 HKT 2023
+# Thu Jan 27 01:04:36 HKT 2023
 
 ENV TZ=Asia/Hong_Kong
 
@@ -17,7 +17,7 @@ RUN sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*
 RUN sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*
 
 RUN dnf -y update
-RUN dnf -y install postfix postfix-ldap tzdata cyrus-sasl cyrus-sasl-plain openldap cronie logrotate && dnf clean all
+RUN dnf -y install postfix postfix-ldap tzdata cyrus-sasl cyrus-sasl-plain openldap cronie logrotate passwd net-tools && dnf clean all
 
 WORKDIR /opt
 
