@@ -11,7 +11,7 @@ services:
       - MYHOSTNAME=smtp-out.contoso.com
 #      - MYNETWORKS=127.0.0.1, 192.168.1.44
       - RELAYHOST=smtpo.hsbc.com.hk
-#      - "ALIASES=alwaysbcc: journal@contoso.com, peter.pen@contoso.com/elon.musk: elon.musk@tasla.com"                  # Where "/" as line seperator
+#      - "ALIASES=alwaysbcc: journal@contoso.com, peter.pen@contoso.com / elon.musk: elon.musk@tasla.com"                # Where "/" as line seperator
 #      - ALWAYS_BCC=alwaysbcc
       - TRANSPORT=tasla.com smtp:[mail.tasla.com]:25, db.com smtp:[mail.db.com]:25                                       
 #      - HEADER_CHECKS=1                                                                                                 # Unset or 0=Disable
