@@ -31,5 +31,5 @@ services:
 #      - postfix:/etc/postfix
       - log:/var/log
     ports:
-      - 2525:2525
+      - 25:25
     restart: unless-stopped
