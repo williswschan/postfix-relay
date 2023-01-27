@@ -25,6 +25,7 @@ services:
 #      - LDAP_PASSWORD=6ubC%&VAf5CK94                                                                                    # Use when PWCHECK_METHOD=LDAP
        - SHADOW_USERNAME=smtp-out                                                                                        # Use when PWCHECK_METHOD=SHADOW
        - SHADOW_PASSWORD=Dax852EB!                                                                                       # Use when PWCHECK_METHOD=SHADOW
+#      - "SYSLOG=@syslog.contoso.com:514"                                                                                # @=UDP, @@=TCP       
     volumes:
 #      - postfix:/etc/postfix
       - log:/var/log
