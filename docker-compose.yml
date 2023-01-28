@@ -18,7 +18,7 @@ services:
 #      - RATE_LIMIT=20                                                                                                   # Unset or 0=Unlimited
 #      - DEFAULT_SMTP_PORT=2525                                                                                          # Unset will be port 25
 #      - DNS=192.168.1.1, 8.8.8.8
-      - PWCHECK_METHOD=SHADOW                                                                                            # Either set "LDAP" or "SHADOW"
+      - PWCHECK_METHOD=SHADOW                                                                                            # Available options; "LDAP", "SHADOW" or not set
 #      - LDAP_SERVERS=dc01.contoso.com                                                                                   # Use when PWCHECK_METHOD=LDAP
 #      - LDAP_SEARCH_BASE=DC=CONTOSO,DC=COM                                                                              # Use when PWCHECK_METHOD=LDAP
 #      - LDAP_BIND_DN=CN=Postfix_Service,OU=Service,OU=Users,OU=HK,DC=CONTOSO,DC=COM                                     # Use when PWCHECK_METHOD=LDAP
