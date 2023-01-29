@@ -1,0 +1,93 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: postfix-relay
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postfix-relay-pvc
+  namespace: postfix-relay
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: nfs-client
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postfix-relay-deployment
+  namespace: postfix-relay
+spec:
+  selector:
+    matchLabels:
+      app: postfix-relay
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: postfix-relay
+    spec:
+      volumes:
+      - name: postfix-relay
+        persistentVolumeClaim:
+          claimName: postfix-relay-pvc
+      containers:
+      - name: postfix-relay
+        image: williswschan/postfix-relay:latest
+        imagePullPolicy: Always
+#        imagePullPolicy: IfNotPresent
+        env:
+        - name: TZ
+          value: "Asia/Hong_Kong"
+        - name: MYHOSTNAME
+          value: "smtp-out.contoso.com"          
+        - name: RELAYHOST
+          value: "smtpo.hkbn.net"
+        - name: ALWAYS_BCC
+          value: "journal.mailbox@contoso.com"
+        - name: TRANSPORT
+          value: "contoso.com smtp:[mail.contoso.com]:25"
+        - name: HEADER_CHECKS
+          value: "1"
+        - name: PWCHECK_METHOD
+          value: "LDAP"
+        - name: LDAP_SERVERS
+          value: "hkpdc01.contoso.com"
+        - name: LDAP_SEARCH_BASE
+          value: "DC=CONTOSO,DC=COM"
+        - name: LDAP_BIND_DN
+          value: "CN=Postfix_Service,OU=Service,OU=Users,OU=HK,DC=CONTOSO,DC=COM"
+        - name: LDAP_PASSWORD
+          value: "6uAT%&VaF7CK85"
+        - name: MYNETWORKS
+          value: ""
+        ports:
+        - containerPort: 25
+          protocol: TCP
+        volumeMounts:
+        - name: postfix-relay
+          mountPath: /etc/postfix
+          subPath: _data/postfix
+        - name: postfix-relay
+          mountPath: /var/log
+          subPath: _data/log
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postfix-relay-service
+  namespace: postfix-relay
+spec:
+  selector:
+    app: postfix-relay
+  type: NodePort
+  ports:
+    - name: "30025"
+      nodePort: 30025
+      port: 30025       # Service Port    
+      targetPort: 25
+      protocol: TCP
