@@ -9,6 +9,7 @@ services:
     environment:
       - TZ=Asia/Hong_Kong
       - MYHOSTNAME=smtp-out.contoso.com
+      - MYDOMAIN=contoso.com      
 #      - MYNETWORKS=127.0.0.1, 192.168.1.44
       - RELAYHOST=smtpo.hsbc.com.hk
 #      - "ALIASES=alwaysbcc: journal@contoso.com, peter.pen@contoso.com / elon.musk: elon.musk@tasla.com"                # Where "/" as line seperator
