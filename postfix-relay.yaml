@@ -45,6 +45,8 @@ spec:
           value: "Asia/Hong_Kong"
         - name: MYHOSTNAME
           value: "smtp-out.contoso.com"          
+        - name: MYDOMAIN
+          value: "contoso.com"          
         - name: RELAYHOST
           value: "smtpo.hkbn.net"
         - name: ALWAYS_BCC
