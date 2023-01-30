@@ -1,41 +1,11 @@
 #!/bin/bash
 
-#set -e
-#set -o pipefail
+#set -e				# Bash to stop execution instantly as a query exits while having a non-zero status.
+#set -o pipefail	# Bash to stop execution instantly as a query exits while having a non-zero status.
 
-shopt -s nocasematch
-if [[ "$PWCHECK_METHOD" == "LDAP" ]]; then
-cat > /etc/sasl2/smtpd.conf <<EOF
-pwcheck_method: saslauthd
-mech_list: plain login
-ldap_servers: ldap://${LDAP_SERVERS}
-ldap_search_base: ${LDAP_SEARCH_BASE}
-ldap_timeout: 10
-ldap_filter: sAMAccountName=%U
-ldap_bind_dn: ${LDAP_BIND_DN}
-ldap_password: ${LDAP_PASSWORD}
-ldap_deref: never
-ldap_restart: yes
-ldap_scope: sub
-ldap_use_sasl: no
-ldap_start_tls: no
-ldap_version: 3
-ldap_auth_method: bind
-EOF
-elif [[ "$PWCHECK_METHOD" == "SHADOW" ]]; then
-cat > /etc/sasl2/smtpd.conf <<EOF
-pwcheck_method: saslauthd
-mech_list: PLAIN LOGIN
-EOF
-else
-	exit 1
-fi
-shopt -u nocasematch
-
-cat > /etc/postfix/header_checks <<EOF
-/^Received:.*/	     	IGNORE
-/^X-Originating-IP:/    IGNORE
-EOF
+cp -nR /etc/postfix.bak/* /etc/postfix
+chmod go-w /etc/postfix/				# This is due to K8S PersistentVolume doesn't do overlay for exposed volume
+rm -rf /etc/postfix.bak
 
 cat > /etc/postfix/main.cf <<EOF
 alias_database = hash:/etc/postfix/aliases
@@ -53,6 +23,8 @@ inet_protocols = ipv4
 #inet_protocols = all
 mail_owner = postfix
 mailq_path = /usr/bin/mailq.postfix
+# maillog managed by rsyslog
+maillog_file =
 manpage_directory = /usr/share/man
 myhostname = smtp-out.contoso.com
 mydestination = \$myhostname, localhost.\$mydomain, localhost
@@ -68,14 +40,54 @@ smtpd_client_restrictions = permit_mynetworks, permit_sasl_authenticated
 smtpd_recipient_restrictions = permit_mynetworks, permit_sasl_authenticated, reject_unauth_destination
 smtpd_relay_restrictions = permit_mynetworks, permit_sasl_authenticated, reject_unauth_destination
 smtpd_sasl_authenticated_header = no
+smtpd_sasl_auth_enable=no
 smtpd_sasl_security_options = noanonymous
 smtpd_sasl_type = cyrus
-smtpd_sender_restrictions = permit_mynetworks, permit_sasl_authenticated, reject
+#smtpd_sender_restrictions = permit_mynetworks, permit_sasl_authenticated, reject
+smtpd_sender_restrictions = permit_mynetworks, permit_sasl_authenticated
 smtpd_tls_cert_file = /etc/pki/tls/certs/postfix.pem
 smtpd_tls_key_file = /etc/pki/tls/private/postfix.key
 smtpd_tls_security_level = may
 transport_maps = hash:/etc/postfix/transport
 unknown_local_recipient_reject_code = 550
+EOF
+
+shopt -s nocasematch
+if [[ "$PWCHECK_METHOD" == "LDAP" ]] && [ "${LDAP_SERVERS}" ] && [ "${LDAP_SEARCH_BASE}" ] && [ "${LDAP_BIND_DN}" ] && [ "${LDAP_PASSWORD}" ]; then
+cat > /etc/sasl2/smtpd.conf <<EOF
+pwcheck_method: saslauthd
+mech_list: plain login
+ldap_servers: ldap://${LDAP_SERVERS}
+ldap_search_base: ${LDAP_SEARCH_BASE}
+ldap_timeout: 10
+ldap_filter: sAMAccountName=%U
+ldap_bind_dn: ${LDAP_BIND_DN}
+ldap_password: ${LDAP_PASSWORD}
+ldap_deref: never
+ldap_restart: yes
+ldap_scope: sub
+ldap_use_sasl: no
+ldap_start_tls: no
+ldap_version: 3
+ldap_auth_method: bind
+EOF
+	postconf smtpd_sasl_auth_enable=yes
+	saslauthd -m /run/saslauthd -a ldap -O /etc/sasl2/smtpd.conf
+elif [[ "$PWCHECK_METHOD" == "SHADOW" ]] && [ "${SHADOW_USERNAME}" ] && [ "${SHADOW_PASSWORD}" ]; then
+cat > /etc/sasl2/smtpd.conf <<EOF
+pwcheck_method: saslauthd
+mech_list: PLAIN LOGIN
+EOF
+	useradd "${SHADOW_USERNAME}"; echo -e "${SHADOW_PASSWORD}" | passwd "${SHADOW_USERNAME}" --stdin
+	postconf smtpd_sasl_auth_enable=yes
+	saslauthd -m /run/saslauthd -a shadow -O /etc/sasl2/smtpd.conf
+fi
+shopt -u nocasematch
+
+cat > /etc/postfix/header_checks <<EOF
+/^Subject:/     		WARN
+/^Received:.*/	     	IGNORE
+/^X-Originating-IP:/    IGNORE
 EOF
 
 cat > /etc/sysconfig/saslauthd <<EOF
@@ -85,7 +97,7 @@ FLAGS=-O /etc/sasl2/smtpd.conf
 EOF
 
 cat > /etc/logrotate.d/postfix <<EOF
-/var/log/postfix.log {
+/var/log/maillog {
 	daily
     rotate 60
     missingok
@@ -95,15 +107,37 @@ cat > /etc/logrotate.d/postfix <<EOF
 #	nocopytruncate
 	nomail
 	noolddir
-#    postrotate
-#        postfix reload > /dev/null 2>/dev/null || true
-#    endscript
+    postrotate
+        postfix reload > /dev/null 2>/dev/null || true
+    endscript
 }
 EOF
 
+cat > /etc/rsyslog.conf <<EOF
+module(load="imuxsock"    # provides support for local system logging (e.g. via logger command)
+       SysSock.Use="on")  # Turn on message reception via local log socket;
+                          # local messages are not retrieved through imjournal now.
+global(workDirectory="/var/lib/rsyslog")
+module(load="builtin:omfile" Template="RSYSLOG_TraditionalFileFormat")
+include(file="/etc/rsyslog.d/*.conf" mode="optional")
+if (\$programname contains "postfix") and (\$msg contains "internal.cloudapp.net") and not (\$msg contains "Subject") then {
+   stop
+}
+*.info;mail.none;authpriv.none;cron.none                /var/log/messages
+authpriv.*                                              /var/log/secure
+mail.*                                                  -/var/log/maillog
+mail.*													${SYSLOG}
+cron.*                                                  /var/log/cron
+*.emerg                                                 :omusrmsg:*
+uucp,news.crit                                          /var/log/spooler
+local7.*                                                /var/log/boot.log
+EOF
+
+cp /etc/resolv.conf /etc/resolv.conf.bak
 if [ "${DNS}" ]
 then
 	yes | cp /etc/resolv.conf.bak /etc/resolv.conf
+	grep -v "^nameserver" /etc/resolv.conf | tee /etc/resolv.conf
 	IFS=',' ;for i in `echo "${DNS}"`; do echo nameserver $i | xargs >> /etc/resolv.conf; done
 fi
 if [ "${ALIASES}" ]
@@ -120,8 +154,8 @@ then
 	postmap hash:/etc/postfix/transport
 fi
 touch /etc/postfix/transport
-postalias hash:/etc/postfix/transport
-if [ "${HEADER_CHECKS}" ]
+postmap hash:/etc/postfix/transport
+if [ "${HEADER_CHECKS}" ] && [ "${HEADER_CHECKS}" != "0" ]
 then
 	postconf header_checks=regexp:/etc/postfix/header_checks
 	postmap hash:/etc/postfix/header_checks
@@ -129,43 +163,23 @@ else
 	postconf header_checks=
 	postmap hash:/etc/postfix/header_checks
 fi
-
 #postmap hash:/etc/postfix/virtual
-
 if [ "${RATE_LIMIT}" ]; then postconf smtpd_client_message_rate_limit=${RATE_LIMIT}; else postconf smtpd_client_message_rate_limit=0; fi
-if [ "${LDAP_SERVERS}" ] && [ "${LDAP_SEARCH_BASE}" ] && [ "${LDAP_BIND_DN}" ] && [ "${LDAP_PASSWORD}" ]
-then
-#	sed -i "s/#LDAP_SERVERS/${LDAP_SERVERS}/g" /etc/sasl2/smtpd.conf
-#	sed -i "s/#LDAP_SEARCH_BASE/${LDAP_SEARCH_BASE}/g" /etc/sasl2/smtpd.conf
-#	sed -i "s/#LDAP_BIND_DN/${LDAP_BIND_DN}/g" /etc/sasl2/smtpd.conf
-#	sed -i "s/#LDAP_PASSWORD/$(echo -e ${LDAP_PASSWORD} | sed "s|\&|\\\&|g")/g" /etc/sasl2/smtpd.conf		# Need to escape any ampersand(&) or sed won't work.
-	saslauthd -m /run/saslauthd -a ldap -O /etc/sasl2/smtpd.conf
-	postconf smtpd_sasl_auth_enable=yes
-else
-	postconf smtpd_sasl_auth_enable=no
-fi
-if [ "${SHADOW_USERNAME}" ] && [ "${SHADOW_PASSWORD}" ]
-then
-	useradd "${SHADOW_USERNAME}"; echo -e "${SHADOW_PASSWORD}" | passwd "${SHADOW_USERNAME}" --stdin
-	saslauthd -m /run/saslauthd -a shadow -O /etc/sasl2/smtpd.conf
-	postconf smtpd_sasl_auth_enable=yes
-else
-	postconf smtpd_sasl_auth_enable=no
-fi
 yes | cp /etc/postfix/master.cf.bak /etc/postfix/master.cf
 if [ "${DEFAULT_SMTP_PORT}" ]; then grep "^smtp.*smtpd$" /etc/postfix/master.cf | sed "s/^smtp/${DEFAULT_SMTP_PORT}/g" >> /etc/postfix/master.cf; fi
-if [ "$MYHOSTNAME" ]; then postconf myhostname="${MYHOSTNAME}"; fi
+if [ "${MYHOSTNAME}" ]; then postconf myhostname="${MYHOSTNAME}"; fi
+if [ "${RELAY_DOMAINS}" ]; then postconf relay_domains="${RELAY_DOMAINS}"; fi
 postconf mynetworks="${MYNETWORKS}"
 postconf relayhost="${RELAYHOST}"
 postconf always_bcc="${ALWAYS_BCC}"
-#postconf maillog_file=/dev/stdout
-postconf maillog_file=/var/log/postfix.log
 
-touch /var/log/postfix.log
+#postconf maillog_file=/dev/stdout
+#postconf maillog_file=/var/log/postfix.log
 #ln -sf /proc/1/fd/1 /var/log/postfix.log
 
 /usr/sbin/crond -m off
-#/usr/sbin/postfix start-fg &
+/usr/sbin/rsyslogd
 /usr/sbin/postfix start
 
-tail -F /var/log/postfix.log >> /dev/stdout		# Non-terminated process need to be placed at the end.
+touch /var/log/maillog
+tail -F /var/log/maillog >> /dev/stdout		# Non-terminated process need to be placed at the end.
