@@ -96,22 +96,24 @@ MECH=ldap
 FLAGS=-O /etc/sasl2/smtpd.conf
 EOF
 
-cat > /etc/logrotate.d/postfix <<EOF
-/var/log/maillog {
-	daily
-    rotate 60
-    missingok
-    ifempty
-    sharedscripts
-    nocompress
+chmod 755 /var/log/			# logrotate required permission.
+
+#cat > /etc/logrotate.d/postfix <<EOF
+#/var/log/maillog {
+#	daily
+#    rotate 60
+#    missingok
+#    ifempty
+#    sharedscripts
+#    nocompress
 #	nocopytruncate
-	nomail
-	noolddir
-    postrotate
-        postfix reload > /dev/null 2>/dev/null || true
-    endscript
-}
-EOF
+#	nomail
+#	noolddir
+#    postrotate
+#        postfix reload > /dev/null 2>/dev/null || true
+#    endscript
+#}
+#EOF
 
 cat > /etc/rsyslog.conf <<EOF
 module(load="imuxsock"    # provides support for local system logging (e.g. via logger command)
