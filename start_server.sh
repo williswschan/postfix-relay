@@ -50,6 +50,8 @@ smtpd_tls_key_file = /etc/pki/tls/private/postfix.key
 smtpd_tls_security_level = may
 transport_maps = hash:/etc/postfix/transport
 unknown_local_recipient_reject_code = 550
+maximal_queue_lifetime = 2d
+bounce_queue_lifetime = 2d
 EOF
 
 shopt -s nocasematch
